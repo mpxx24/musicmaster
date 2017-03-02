@@ -1,17 +1,43 @@
 import React, { Component } from 'react';
 import './App.css';
 import { FormGroup, FormControl, InputGroup, Glyphicon } from 'react-bootstrap';
+import Profile from './Profile';
+import Gallery from './Gallery';
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      query: ''
+      query: '',
+      artist: null,
+      tracks: []
     }
   }
 
   search() {
-    console.log(this.state);
+    const baseUrl = 'https://api.spotify.com/v1/search?';
+    let fetchUrl = `${baseUrl}q=${this.state.query}&type=artist&limit=1`;
+    const albumUrl = 'https://api.spotify.com/v1/artists/';
+
+    fetch(fetchUrl, {
+      method: 'GET'
+    })
+      .then(response => response.json())
+      .then(json => {
+        const artist = json.artists.items[0];
+        this.setState({ artist })
+
+        fetchUrl = `${albumUrl}${artist.id}/top-tracks?country=PL&`;
+        fetch(fetchUrl, {
+          method: 'GET'
+        })
+        .then(response => response.json())
+        .then(json => {
+          const {tracks} = json;
+          this.setState({tracks});
+        })
+
+      });
   }
 
   render() {
@@ -36,13 +62,16 @@ class App extends Component {
             </InputGroup.Addon>
           </InputGroup>
         </FormGroup>
-        <div>
-          <div>Artist pic</div>
-          <div>Artist name</div>
-        </div>
-        <div className="Gallery">
-          Gallery
-        </div>
+        {
+          this.state.artist !== null
+            ?
+            <div>
+              <Profile artist={this.state.artist} />
+              <Gallery tracks={this.state.tracks} />
+            </div>            
+            : <div></div>
+
+        }
       </div>
     )
   }
